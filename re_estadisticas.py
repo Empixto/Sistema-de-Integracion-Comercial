@@ -7,7 +7,8 @@ from PySide6.QtCharts import QChart, QChartView, QBarSet, QBarSeries, QBarCatego
 from PySide6.QtGui import QPainter, QColor
 from database import cargar_ventas_db, cargar_clientes_db
 
-# Empezamos modulo de estadisticas
+
+# prueba de una rama
 
 class DialogoAnaliticaClientes(QDialog):
     def __init__(self, reg, frec, corp, total_cli, parent=None):
