@@ -5,34 +5,38 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QTimer, Signal  # Alineación, aviso de acceso y temporizador.
 
 class LoginWindow(QWidget):
+    """Ventana que valida las credenciales antes de permitir el acceso."""
+
     # Permite ingresar al sistema y avisa cuando el acceso es correcto.
     login_exitoso = Signal()
 
     def __init__(self):
+        """Prepara las credenciales de acceso y construye la ventana."""
         # Prepara la ventana de acceso.
         super().__init__()
-        
+
         # Datos que se deben ingresar para acceder.
         self.USUARIO_CORRECTO = "admin"
         self.CLAVE_CORRECTA = "1111"
-        
+
         # Lleva la cuenta de los intentos disponibles y los que fallaron.
         self.max_intentos = 3
         self.intentos_restantes = self.max_intentos
         self.contador_intentos_fallidos = 0
-        
+
         # Recuerda si el acceso fue aprobado.
         self.bandera_acceso_concedido = False
-        
+
         # Arma y acomoda los elementos de la pantalla.
         self.init_ui()
 
     def init_ui(self):
+        """Crea y acomoda los campos, el botón y los mensajes de acceso."""
         # Crea los controles de la pantalla de acceso.
-        self.setWindowTitle("Empi SIGC - Login")
+        self.setWindowTitle("Empi SIGC - Inicio de sesión")
         self.resize(900, 650)
         self.setMinimumSize(600, 500)
-        
+
         # Define los colores y la apariencia de la pantalla.
         self.setStyleSheet("""
             QWidget {
@@ -111,7 +115,7 @@ class LoginWindow(QWidget):
         card = QFrame()
         card.setObjectName("card")
         card.setFixedWidth(420)
-        
+
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(30, 35, 30, 35)
         card_layout.setSpacing(15)
@@ -120,7 +124,7 @@ class LoginWindow(QWidget):
         lbl_title = QLabel("Bienvenido")
         lbl_title.setObjectName("title")
         lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         lbl_subtitle = QLabel("Inicie sesión con su usuario y contraseña para continuar.")
         lbl_subtitle.setObjectName("subtitle")
         lbl_subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -128,7 +132,7 @@ class LoginWindow(QWidget):
         # Espacio para escribir el nombre de usuario.
         self.txt_usuario = QLineEdit()
         self.txt_usuario.setPlaceholderText("Nombre de usuario")
-        
+
         # Espacio para escribir la contraseña sin mostrarla.
         self.txt_password = QLineEdit()
         self.txt_password.setPlaceholderText("Contraseña")
@@ -164,6 +168,7 @@ class LoginWindow(QWidget):
         main_layout.addWidget(card)
 
     def validar_acceso(self):
+        """Verifica las credenciales y administra los intentos disponibles."""
         # Lee las credenciales sin espacios al inicio o al final.
         usuario = self.txt_usuario.text().strip()
         clave = self.txt_password.text().strip()
@@ -175,6 +180,7 @@ class LoginWindow(QWidget):
             self.lbl_mensaje.setText("Por favor, ingrese tanto el usuario como la contraseña.")
             return
 
+        # Si ya se agotaron los intentos, no se aceptan más comprobaciones.
         if self.intentos_restantes <= 0:
             return
 
@@ -202,7 +208,8 @@ class LoginWindow(QWidget):
             self.lbl_mensaje.setObjectName("status_error")
             self.lbl_mensaje.setStyle(self.lbl_mensaje.style())
             self.lbl_mensaje.setText(
-                f"Credenciales incorrectas.\nQuedan {self.intentos_restantes} intento(s) disponibles."
+                f"Las credenciales no son correctas.\n"
+                f"Intentos restantes: {self.intentos_restantes}."
             )
             self.txt_password.clear()
             self.txt_password.setFocus()
@@ -211,7 +218,7 @@ class LoginWindow(QWidget):
         # Informa que ya no quedan intentos.
         self.lbl_mensaje.setObjectName("status_error")
         self.lbl_mensaje.setStyle(self.lbl_mensaje.style())
-        self.lbl_mensaje.setText("Acceso bloqueado. Límite superado.")
+        self.lbl_mensaje.setText("Acceso bloqueado. Se agotaron los intentos permitidos.")
 
         self.txt_usuario.setEnabled(False)
         self.txt_password.setEnabled(False)
@@ -219,11 +226,13 @@ class LoginWindow(QWidget):
         # Avisa que se alcanzó el límite y cierra la aplicación.
         QMessageBox.critical(
             self,
-            "Acceso Bloqueado",
-            f"Ha superado el máximo de {self.max_intentos} intentos permitidos. El sistema se cerrará."
+            "Acceso bloqueado",
+            f"Se alcanzó el límite de {self.max_intentos} intentos. "
+            "La aplicación se cerrará.",
         )
         sys.exit()
 
     def abrir_menu_principal(self):
+        """Notifica al controlador que el usuario puede acceder al sistema."""
         # Avisa que el acceso fue aprobado.
         self.login_exitoso.emit()

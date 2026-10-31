@@ -7,27 +7,32 @@ from PySide6.QtCore import Qt  # Permite alinear el contenido y cambiar el curso
 from database import guardar_cliente_db, cargar_clientes_db, eliminar_cliente_db  # Incluye las acciones para guardar, mostrar y eliminar clientes.
 
 class ClientesWidget(QWidget):
+    """Pantalla para registrar, consultar y eliminar clientes."""
+
     # Permite registrar, consultar y eliminar clientes.
     def __init__(self):
+        """Inicializa los datos y construye la pantalla de gestión de clientes."""
         # Prepara la pantalla de clientes.
         super().__init__()
-        
+
         # Guarda los clientes y las cantidades por tipo.
         self.lista_clientes = []
         self.contador_total_clientes = 0
         self.contador_regulares = 0
         self.contador_frecuentes = 0
         self.contador_corporativos = 0
-        
+
         self.init_ui()
         self.cargar_datos_iniciales()
 
     def showEvent(self, event):
+        """Actualiza los datos cada vez que se muestra esta sección."""
         # Actualiza los datos al abrir esta pantalla.
         super().showEvent(event)
         self.cargar_datos_iniciales()
 
     def init_ui(self):
+        """Crea el formulario, los indicadores, los filtros y la tabla."""
         # Crea el formulario, los contadores y la tabla de clientes.
         self.setStyleSheet("""
             QWidget {
@@ -139,7 +144,7 @@ class ClientesWidget(QWidget):
         # Contadores de clientes por tipo.
         stats_layout = QHBoxLayout()
         stats_layout.setSpacing(12)
-        
+
         # Crea una tarjeta para cada contador.
         card_tot, self.lbl_val_total = self._crear_tarjeta_stat("Total Clientes", "0", "#0071dc")
         card_reg, self.lbl_val_reg = self._crear_tarjeta_stat("Regulares", "0", "#16a34a")
@@ -177,10 +182,10 @@ class ClientesWidget(QWidget):
         self.txt_cliente_edad.setPlaceholderText("Ej. 30")
 
         self.cmb_cliente_tipo = QComboBox()
-        self.cmb_cliente_tipo.addItems(["Seleccione Tipo...", "Regular", "Frecuente", "Corporativo"])
+        self.cmb_cliente_tipo.addItems(["Seleccione el tipo", "Regular", "Frecuente", "Corporativo"])
 
         self.cmb_pago_preferido = QComboBox()
-        self.cmb_pago_preferido.addItems(["Seleccione Pago...", "Efectivo", "Tarjeta", "Transferencia"])
+        self.cmb_pago_preferido.addItems(["Seleccione el medio de pago", "Efectivo", "Tarjeta", "Transferencia"])
 
         # Botón para guardar el cliente.
         btn_guardar_cliente = QPushButton("Registrar Cliente")
@@ -209,15 +214,15 @@ class ClientesWidget(QWidget):
         eliminar_layout.setContentsMargins(15, 12, 15, 12)
         eliminar_layout.setSpacing(10)
 
-        lbl_buscar = QLabel("Buscar y Eliminar por Nombre:")
+        lbl_buscar = QLabel("Buscar y eliminar por nombre:")
         lbl_buscar.setProperty("class", "form_label")
 
         self.txt_eliminar_nombre = QLineEdit()
-        self.txt_eliminar_nombre.setPlaceholderText("Escriba el nombre exacto del cliente...")
+        self.txt_eliminar_nombre.setPlaceholderText("Ingrese el nombre exacto del cliente")
         # Permite iniciar la búsqueda con Enter.
         self.txt_eliminar_nombre.returnPressed.connect(self.eliminar_cliente_por_nombre_logica)
 
-        btn_eliminar_cliente = QPushButton("Eliminar Cliente")
+        btn_eliminar_cliente = QPushButton("Eliminar cliente")
         btn_eliminar_cliente.setObjectName("btn_eliminar")
         btn_eliminar_cliente.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_eliminar_cliente.clicked.connect(self.eliminar_cliente_por_nombre_logica)
@@ -225,7 +230,7 @@ class ClientesWidget(QWidget):
         eliminar_layout.addWidget(lbl_buscar)
         eliminar_layout.addWidget(self.txt_eliminar_nombre, 1)
         eliminar_layout.addWidget(btn_eliminar_cliente)
-        
+
         layout.addWidget(eliminar_frame)
 
         # Tabla con los clientes registrados.
@@ -233,14 +238,15 @@ class ClientesWidget(QWidget):
         self.tabla_clientes.setColumnCount(5)
         self.tabla_clientes.setHorizontalHeaderLabels(["No.", "Nombre", "Edad", "Tipo de Cliente", "Pago Preferido"])
         self.tabla_clientes.verticalHeader().setVisible(False)
-        
+
         header = self.tabla_clientes.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        
+
         layout.addWidget(self.tabla_clientes)
 
     def _crear_tarjeta_stat(self, titulo, valor_inicial, color_destacado):
+        """Crea una tarjeta visual y devuelve la tarjeta junto con su contador."""
         # Crea una tarjeta para mostrar un contador.
         card = QFrame()
         card.setStyleSheet("""
@@ -252,18 +258,19 @@ class ClientesWidget(QWidget):
         """)
         l = QVBoxLayout(card)
         l.setContentsMargins(14, 12, 14, 12)
-        
+
         lbl_val = QLabel(valor_inicial)
         lbl_val.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {color_destacado};")
-        
+
         lbl_t = QLabel(titulo)
         lbl_t.setStyleSheet("font-size: 13px; font-weight: 600; color: #475569;")
-        
+
         l.addWidget(lbl_val)
         l.addWidget(lbl_t)
         return card, lbl_val
 
     def cargar_datos_iniciales(self):
+        """Carga los clientes y calcula cuántos pertenecen a cada clasificación."""
         # Carga los clientes y cuenta cuántos hay de cada tipo.
         self.lista_clientes = []
         self.contador_total_clientes = 0
@@ -272,16 +279,19 @@ class ClientesWidget(QWidget):
         self.contador_corporativos = 0
 
         registros_db = cargar_clientes_db()
-        
-        # Cuenta y prepara los datos de cada cliente.
+
+        # Recorre los registros una vez para actualizar la lista y los contadores.
         for registro in registros_db:
             c_id, nombre, edad, tipo, pago = registro
-            
+
             self.contador_total_clientes += 1
+            # Cada cliente incrementa el contador de su clasificación.
             if tipo == "Regular":
                 self.contador_regulares += 1
+            # Se suma el contador de clientes frecuentes cuando esa es su categoría.
             elif tipo == "Frecuente":
                 self.contador_frecuentes += 1
+            # Se contabiliza a los clientes corporativos por separado.
             elif tipo == "Corporativo":
                 self.contador_corporativos += 1
 
@@ -297,30 +307,36 @@ class ClientesWidget(QWidget):
         self._actualizar_contadores()
 
     def registrar_cliente_logica(self):
+        """Valida los campos y guarda el cliente si todos los datos son correctos."""
         # Valida los datos y registra al cliente.
         nombre = self.txt_cliente_nombre.text().strip()
         edad_str = self.txt_cliente_edad.text().strip()
         tipo = self.cmb_cliente_tipo.currentText()
         pago = self.cmb_pago_preferido.currentText()
 
+        # Los datos obligatorios deben existir antes de comprobar su formato.
         if not nombre or not edad_str:
             QMessageBox.warning(self, "Campos Incompletos", "Debe ingresar el nombre y la edad del cliente.")
             return
-        
+
+        # Se rechazan nombres con números para evitar datos evidentemente inválidos.
         if any(caracter.isdigit() for caracter in nombre):
             QMessageBox.warning(self, "Nombre Inválido", "El nombre del cliente no puede contener números.")
             return
 
+        # La edad debe contener dígitos antes de convertirla a un número.
         if not edad_str.isdigit():
             QMessageBox.warning(self, "Edad Inválida", "La edad debe ser un número entero mayor que 0 y menor o igual que 100.")
             return
 
         edad = int(edad_str)
+        # Se limita la edad a un rango razonable y mayor que cero.
         if not 0 < edad <= 100:
             QMessageBox.warning(self, "Edad Inválida", "La edad debe ser un número entero mayor que 0 y menor o igual que 100.")
             return
 
-        if tipo == "Seleccione Tipo..." or pago == "Seleccione Pago...":
+        # No se permite guardar las opciones iniciales de los menús desplegables.
+        if tipo == "Seleccione el tipo" or pago == "Seleccione el medio de pago":
             QMessageBox.warning(self, "Selección Requerida", "Debe seleccionar un tipo de cliente y un método de pago válido.")
             return
 
@@ -334,16 +350,18 @@ class ClientesWidget(QWidget):
         self.cmb_cliente_tipo.setCurrentIndex(0)
         self.cmb_pago_preferido.setCurrentIndex(0)
 
-        QMessageBox.information(self, "Éxito", f"Cliente '{nombre}' registrado y guardado correctamente.")
+        QMessageBox.information(self, "Registro completado", f"El cliente «{nombre}» se registró correctamente.")
 
     def eliminar_cliente_por_nombre_logica(self):
+        """Busca un cliente por nombre y pide confirmación antes de eliminarlo."""
         # Busca al cliente por nombre y solicita confirmación para eliminarlo.
         nombre_buscar = self.txt_eliminar_nombre.text().strip()
 
+        # Un nombre vacío no permite identificar de forma segura al cliente.
         if not nombre_buscar:
             QMessageBox.warning(
-                self, 
-                "Campo Vacío", 
+                self,
+                "Campo Vacío",
                 "Por favor, ingrese el nombre del cliente que desea eliminar."
             )
             return
@@ -357,10 +375,11 @@ class ClientesWidget(QWidget):
             None
         )
 
+        # Solo se solicita confirmación cuando la búsqueda encontró un cliente.
         if cliente_encontrado is None:
             QMessageBox.warning(
-                self, 
-                "No Encontrado", 
+                self,
+                "No Encontrado",
                 f"No se encontró ningún cliente registrado con el nombre '{nombre_buscar}'."
             )
         else:
@@ -376,22 +395,24 @@ class ClientesWidget(QWidget):
                 QMessageBox.StandardButton.No
             )
 
+            # La base de datos se modifica únicamente si el usuario confirma.
             if confirmacion == QMessageBox.StandardButton.Yes:
                 eliminar_cliente_db(cliente_id)
                 self.cargar_datos_iniciales()
                 self.txt_eliminar_nombre.clear()
-                
+
                 QMessageBox.information(
-                    self, 
-                    "Eliminado", 
+                    self,
+                    "Eliminado",
                     f"El cliente '{nombre_real}' fue eliminado correctamente de la base de datos."
                 )
 
     def _actualizar_tabla(self):
+        """Reemplaza las filas de la tabla con los clientes cargados."""
         # Muestra los datos de los clientes en la tabla.
         self.tabla_clientes.setRowCount(len(self.lista_clientes))
-        
-        # Coloca cada cliente en una fila.
+
+        # Cada registro se presenta en una fila con sus cinco datos visibles.
         for idx, cli in enumerate(self.lista_clientes):
             item_no = QTableWidgetItem(str(idx + 1))
             item_nom = QTableWidgetItem(cli["nombre"])
@@ -401,6 +422,7 @@ class ClientesWidget(QWidget):
 
             item_no.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
+            # El número de fila se centra y todos los valores usan texto legible.
             for item in [item_no, item_nom, item_ed, item_tp, item_pg]:
                 item.setForeground(Qt.GlobalColor.black)
 
@@ -411,6 +433,7 @@ class ClientesWidget(QWidget):
             self.tabla_clientes.setItem(idx, 4, item_pg)
 
     def _actualizar_contadores(self):
+        """Actualiza las tarjetas con los contadores calculados desde la base."""
         # Actualiza los valores de las tarjetas.
         self.lbl_val_total.setText(str(self.contador_total_clientes))
         self.lbl_val_reg.setText(str(self.contador_regulares))
